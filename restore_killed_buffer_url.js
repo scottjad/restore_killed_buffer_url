@@ -3,11 +3,12 @@
 
 var kill_buffer_original = kill_buffer_original || kill_buffer;
 
-var killed_buffer_urls = [];
+var killed_buffers = [];
 
 kill_buffer = function (buffer, force) {
     if (buffer.display_uri_string) {
-        killed_buffer_urls.push(buffer.display_uri_string);
+        killed_buffers.push({url: buffer.display_uri_string,
+                             title: buffer.title});
     }
 
     kill_buffer_original(buffer,force);
@@ -15,20 +16,20 @@ kill_buffer = function (buffer, force) {
 
 interactive("restore-killed-buffer-url", "Loads url from a previously killed buffer",
             function restore_killed_buffer_url (I) {
-                if (killed_buffer_urls.length !== 0) {                
-                    var url = yield I.minibuffer.read(
+                if (killed_buffers.length !== 0) {
+                    var killed_buffer = yield I.minibuffer.read(
                         $prompt = "Restore killed buffer url:",
-                        $completer = new all_word_completer($completions = killed_buffer_urls, $match_required = true // $require_match
-                                                           ),
-                        $default_completion = killed_buffer_urls[killed_buffer_urls.length - 1],
+                        $completer = new all_word_completer($completions = killed_buffers,
+                                                            $get_string = function (x) x.url,
+                                                            $get_description = function (x) x.title),
+                        $default_completion = killed_buffers[killed_buffers.length - 1],
                         $auto_complete = "url",
                         $auto_complete_initial = true,
                         $auto_complete_delay = 0,
-                        $match_required = true
-                        // $require_match // refactor-completers
+                        $require_match = true
                     );
                     
-                    load_url_in_new_buffer(url);
+                    load_url_in_new_buffer(killed_buffer.url);
                 } else {
                     I.window.minibuffer.message("No killed buffer urls");
                 }
