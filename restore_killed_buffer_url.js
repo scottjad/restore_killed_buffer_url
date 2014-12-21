@@ -8,7 +8,8 @@ var killed_buffers = [];
 kill_buffer = function (buffer, force) {
     if (buffer.display_uri_string) {
         killed_buffers.push({url: buffer.display_uri_string,
-                             title: buffer.title});
+                             title: buffer.title,
+                             history: buffer.web_navigation.sessionHistory});
     }
 
     kill_buffer_original(buffer,force);
@@ -30,6 +31,12 @@ interactive("restore-killed-buffer-url", "Loads url from a previously killed buf
                     );
                     
                     load_url_in_new_buffer(killed_buffer.url);
+
+                    var buf = I.window.buffers.current;
+                    buf.web_navigation.sessionHistory = killed_buffer.history;
+                    var original_index = buf.web_navigation.sessionHistory.index;
+                    buf.web_navigation.gotoIndex(original_index);
+
                 } else {
                     I.window.minibuffer.message("No killed buffer urls");
                 }
